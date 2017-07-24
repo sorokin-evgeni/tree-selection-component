@@ -1,0 +1,9 @@
+{
+  "presets": ["es2015-script", "babel-preset-react"],
+  "plugins": ["transform-decorators-legacy", "transform-object-rest-spread", "transform-regenerator", ["transform-runtime", {
+    "helpers": false,
+    "polyfill": false,
+    "regenerator": true,
+    "moduleName": "babel-runtime"
+  }]]
+}

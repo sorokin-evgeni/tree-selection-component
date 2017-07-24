@@ -1,0 +1,160 @@
+@import "reboot";
+@import "variables";
+@import "modal";
+@import "button";
+@import "input";
+
+.main-nav {
+    margin: @outer-margin;
+    padding: @base-padding;
+    text-align: right;
+
+    a {
+        display: inline-block;
+        margin-left: @icon-margin;
+    }
+}
+
+.projects-form {
+    position: relative;
+
+    nav {
+        .material-icons {
+            margin-right: @icon-margin;
+            font-size: @space-m;
+        }
+    }
+
+    > table {
+        width: 100%;
+    }
+}
+
+.projects-form__loading {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+}
+
+.projects-form__loading-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    opacity: .5;
+    background: white;
+}
+
+.projects-form__loading-text {
+    position: absolute;
+    top: 50%;
+    width: 100%;
+    text-align: center;
+    line-height: @space-m;
+    font-size: @space-m;
+    margin-top: -@space-m/2
+}
+
+.projects-cell {
+    vertical-align: top;
+    width: 50%;
+
+    .projects {
+        margin: 0 auto;
+        overflow: auto;
+
+        @level-offset: @space-m;
+
+        .projects__list-container {
+            height: 400px;
+            width: 400px;
+            overflow: auto;
+            margin: @space-s 0;
+
+            li {
+                height: @space-xl;
+                position: relative;
+                padding: 0 @space-l;
+            }
+
+            .level_1 { padding-left: @level-offset*1; }
+            .level_2 { padding-left: @level-offset*2; }
+            .level_3 { padding-left: @level-offset*3; }
+            .level_4 { padding-left: @level-offset*4; }
+            .level_5 { padding-left: @level-offset*5; }
+            .level_6 { padding-left: @level-offset*6; }
+            .level_7 { padding-left: @level-offset*7; }
+        }
+
+        // TODO: remove
+        ul .projects__project-name {
+            padding-left: @level-offset*0;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        ul ul .projects__project-name {
+            padding-left: @level-offset*1;
+        }
+
+        ul ul ul .projects__project-name {
+            padding-left: @level-offset*2;
+        }
+
+        ul ul ul ul .projects__project-name {
+            padding-left: @level-offset*3;
+        }
+
+        .projects__copy-button {
+            position: absolute;
+            top: 0;
+            font-size: @space-l;
+            color: @color-ghost;
+        }
+
+        li:hover {
+            .projects__copy-button {
+                color: @color-typo-primary;
+            }
+        }
+
+        .projects__project-selected {
+            background: lightblue;
+        }
+
+        .projects__project-name-highlight {
+            background: yellow;
+        }
+    }
+}
+
+.projects-cell__visible {
+    .projects__copy-button {
+        right: 0;
+    }
+}
+
+.projects-cell__hidden {
+    .projects__copy-button {
+        left: 0;
+    }
+}
+
+.projects__project-selected {
+    background: lightblue;
+}
+
+#console {
+    position: absolute;
+    top: 0;
+    right: -320px;
+    border: 1px solid black;
+    width: 300px;
+    background: @color-ghost;
+    height: 400px;
+}
+
