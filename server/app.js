@@ -12,7 +12,7 @@ app.use('/api/project/list', function(request, response, next) {
 });
 
 app.use('/', function(request, response) {
-    response.sendFile(path.resolve('dist', 'index.html'));
+    response.sendFile(path.resolve('dist', 'demo.html'));
 });
 
 app.listen(port, function() {

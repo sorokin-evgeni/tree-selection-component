@@ -18,9 +18,9 @@ function getNode(nodeId, hash) {
 function getItemForArray(id, hash, {level=0, name}={}) {
     let
         item = getNode(id, hash),
-        {isHidden, hasHiddenChildren, selected} = item;
+        {isHidden, hasHiddenChildren} = item;
 
-    return { id, isHidden, hasHiddenChildren, selected, name: name || item.name, level};
+    return { id, isHidden, hasHiddenChildren, name: name || item.name, level};
 }
 
 function findVisibleParent(id, hash) {
@@ -133,11 +133,22 @@ function _getHiddenItems(rootIds, hash, {level=1, query=null}) {
     return result;
 }
 
+function filterTree(rootIds, hash, callback) {
+    let result = [];
+    rootIds.forEach(id => {
+        if (callback(hash[id])) {
+            result.push(id);
+        }
+        hash[id].children.length && (result = result.concat(filterTree(hash[id].children, hash, callback)));
+    });
+    return result;
+}
+
 const Tree = {
 
-    constructHash(rawData) {
+    constructHash(rawData, visibleItems=[]) {
         Benchmark.start('constructHash');
-        const hash = {};
+        let hash = {};
 
         const skippedChildren = [];
 
@@ -145,7 +156,8 @@ const Tree = {
             let project = rawData[i];
             const parentId = project.parentProject ? project.parentProject.id : null;
             hash[project.id] = {
-                ...project,
+                name: project.name,
+                id: project.id,
                 isHidden: true,
                 hasHiddenChildren: true,
                 children: [],
@@ -165,6 +177,13 @@ const Tree = {
 
         skippedChildren.forEach(id => {
             hash[hash[id].parentId].children.push(id);
+        });
+
+        visibleItems.forEach(id => {
+            hash = this.setVisible(id, hash, {
+                recursive: false,
+                clone: false
+            });
         });
 
         Benchmark.stop('constructHash');
@@ -200,12 +219,12 @@ const Tree = {
         return hash;
     },
 
-    setVisible(itemId, hash) {
+    setVisible(itemId, hash, {recursive=true, clone=true} = {}) {
 
-        hash = deepClone(hash);
+        clone && (hash = deepClone(hash));
         Benchmark.start('setVisible');
 
-        forEachChildren(itemId, hash, item => {
+        recursive && forEachChildren(itemId, hash, item => {
             item.isHidden = false;
             item.hasHiddenChildren = false;
 
@@ -325,6 +344,16 @@ const Tree = {
         return visibleItems;
     },
 
+    getVisibleItemsIds(rootIds, hash) {
+        Benchmark.start('getVisibleItemsIds');
+        const visibleItemsIds = filterTree(rootIds, hash, item => {
+            return !item.isHidden;
+        });
+
+        Benchmark.stop('getVisibleItemsIds');
+        return visibleItemsIds;
+    },
+
     getHiddenItems(rootIds, hash, options={}) {
         Benchmark.start('getHiddenItems');
         const children = rootIds.reduce((collector, id) => {
@@ -335,14 +364,6 @@ const Tree = {
 
         Benchmark.stop('getHiddenItems');
         return hiddenItems;
-    },
-
-    selectItem(itemId, hash) {
-        Benchmark.start('selectItem');
-        hash = deepClone(hash);
-        getNode(itemId, hash).selected = true;
-        Benchmark.stop('selectItem');
-        return hash;
     }
 
 };

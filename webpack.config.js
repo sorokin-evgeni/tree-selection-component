@@ -4,7 +4,8 @@ const path = require('path'),
 module.exports = {
 
     entry: {
-        treeSelectionComponent: './src/index.jsx'
+        treeSelectionComponent: './src/TreeSelectionComponent.jsx',
+        demo: './demo/index.jsx'
     },
 
     output: {
@@ -35,8 +36,8 @@ module.exports = {
     plugins: [
         new HtmlWebpackPlugin({
             title: 'My App',
-            filename: 'index.html',
-            template: './src/index.ejs'
+            filename: 'demo.html',
+            template: './demo/index.ejs'
         })
     ]
 

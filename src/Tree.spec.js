@@ -1040,7 +1040,7 @@ describe('Tree operations', function() {
 
             expect(hash['root'].sortedChildren.map(item => item.id)).to.eql(['root_1_1', 'root_1_2', 'root_1_3']);
 
-        })
+        });
 
         it('should change items in array when direction is down', function() {
 

@@ -1,9 +1,39 @@
 import React from 'react';
 import Modal from './components/modal';
 import Tree from './Tree';
-import data from './data';
+import ProjectsModel from './model/Projects';
 import Benchmark from './utils/Benchmark';
 import debounce from 'throttle-debounce/debounce';
+import './less/main.less';
+
+//for IE9:
+import 'phantomjs-polyfill/bind-polyfill.js';
+import 'phantomjs-polyfill-find-index/findIndex-polyfill.js';
+import 'phantomjs-polyfill-find/find-polyfill.js';
+if (typeof Object.assign != 'function') {
+    Object.assign = function(target, varArgs) { // .length of function is 2
+        'use strict';
+        if (target == null) { // TypeError if undefined or null
+            throw new TypeError('Cannot convert undefined or null to object');
+        }
+
+        var to = Object(target);
+
+        for (var index = 1; index < arguments.length; index++) {
+            var nextSource = arguments[index];
+
+            if (nextSource != null) { // Skip over if undefined or null
+                for (var nextKey in nextSource) {
+                    // Avoid bugs when hasOwnProperty is shadowed
+                    if (Object.prototype.hasOwnProperty.call(nextSource, nextKey)) {
+                        to[nextKey] = nextSource[nextKey];
+                    }
+                }
+            }
+        }
+        return to;
+    };
+}
 
 const ARROW_KEY = {
         37: 'left',
@@ -11,7 +41,14 @@ const ARROW_KEY = {
         39: 'right',
         40: 'down'
     },
-    ENTER_KEY = 13;
+    ENTER_KEY = 13,
+    
+    // viewport settings: 
+    VIEWPORT_ITEMS_COUNT = 20,
+    OFFSET_ITEMS_COUNT = 20;
+
+// it is not const because it can be calculated if need.
+let itemHeight = 24;
 
 class TreeNodeView extends React.Component {
 
@@ -48,7 +85,7 @@ class TreeNodeView extends React.Component {
         return (
             <li
                 className={`level_${this.props.item.level}${this.props.isSelected ? ' projects__project-selected' : ''}`}
-                onClick={function(event) {
+                onClick={function() {
                     this.props.select(this.props.item.id);
                 }.bind(this)}
             >
@@ -99,9 +136,13 @@ export default class TreeSelectionComponent extends React.Component {
         return this.state.hash[this.state.selectedItemId];
     }
 
-    get selectedItemCollection() {
+    get selectedItemType() {
         if (!this.selectedItem) return;
-        return this.state[`${this.selectedItem.isHidden ? 'hidden' : 'visible'}Items`];
+        return this.selectedItem.isHidden ? 'hidden' : 'visible';
+    }
+
+    get selectedItemCollection() {
+        return this.state[`${this.selectedItemType}Items`];
     }
 
     get selectedItemIndex() {
@@ -115,26 +156,20 @@ export default class TreeSelectionComponent extends React.Component {
             fetching: true,
             rootIds: [],
             hash: {},
-            itemHeight: 24,
-            parentHeight: 400,
-            visibleItemsCount: 20,
-            offsetItemsCount: 20,
             selectedItemId: null,
             filterText: '',
             hiddenTreeViewport: {items: []},
             visibleTreeViewport: {items: []},
             visibleItems: [],
-            hiddenItems: [],
-            visibleScrollTop: 0,
-            hiddenScrollTop: 0
+            hiddenItems: []
         };
 
         this._debouncedFilter = debounce(800, this._debouncedFilter);
     }
 
     componentDidMount() {
-        data.getProjectsAsync().then(rawData => {
-            let hash = Tree.constructHash(rawData);
+        ProjectsModel.getProjectsAsync().then(rawData => {
+            let hash = Tree.constructHash(rawData, this.props.visibleItemsIds);
             let rootIds = Tree.getRootIds(rawData);
             this.setState({
                 rootIds
@@ -151,6 +186,7 @@ export default class TreeSelectionComponent extends React.Component {
 
             if (ARROW_KEY[key] !== undefined) {
                 this.moveSelectionCursor(ARROW_KEY[key]);
+                event.preventDefault();
                 return;
             }
 
@@ -167,8 +203,11 @@ export default class TreeSelectionComponent extends React.Component {
 
         //calc item which will be selected:
         let selectedItemIndex = this.selectedItemIndex;
-        this[`set${this.selectedItem.isHidden ? 'Visible' : 'Hidden'}`](this.selectedItem.id);
-        let collection = this.state[[`${this.selectedItem.isHidden ? 'visible' : 'hidden'}Items`]];
+        if (selectedItemIndex === -1) return;
+        let previousType = this.selectedItemType;
+        const capitalizedType = this.selectedItem.isHidden ? 'Visible' : 'Hidden';
+        this[`set${capitalizedType}`](this.selectedItem.id);
+        let collection = this.state[[`${previousType}Items`]];
 
         this.selectItem(
             collection[selectedItemIndex]
@@ -187,14 +226,17 @@ export default class TreeSelectionComponent extends React.Component {
             return;
         }
 
+        let range;
         switch (direction) {
             case 'left':
-                if (!this.selectedItem.isHidden || !this.state.visibleItems.length) break;
-                this.state.visibleItems[1] && this.selectItem(this.state.visibleItems[1].id);
+                if (!this.selectedItem.isHidden || this.state.visibleItems.length < 2) break;
+                range = this.calculateVisibleRange(this.state.visibleItems, this.visibleContainer.scrollTop, {offset: 0});
+                this.selectItem(this.state.visibleItems[range.begin || 1].id);
                 break;
             case 'right':
                 if (this.selectedItem.isHidden || !this.state.hiddenItems.length) break;
-                this.selectItem(this.state.hiddenItems[0].id);
+                range = this.calculateVisibleRange(this.state.hiddenItems, this.hiddenContainer.scrollTop, {offset: 0});
+                this.selectItem(this.state.hiddenItems[range.begin].id);
                 break;
             case 'up':
                 if (this.selectedItemIndex === 0) break;
@@ -222,33 +264,39 @@ export default class TreeSelectionComponent extends React.Component {
             hash,
             hiddenItems,
             visibleItems,
-            fetching: false,
-            hiddenTreeViewport: this.calculateViewport(hiddenItems, this.state.hiddenScrollTop),
-            visibleTreeViewport: this.calculateViewport(visibleItems, this.state.visibleScrollTop)
+            hiddenTreeViewport: this.calculateViewport(hiddenItems, this.hiddenContainer.scrollTop),
+            visibleTreeViewport: this.calculateViewport(visibleItems, this.visibleContainer.scrollTop)
         });
     }
 
-    calculateViewport(sourceArray, topOffset) {
-        const totalHeight = sourceArray.length * this.state.itemHeight;
-        const elementsOffset = Math.ceil( (topOffset / totalHeight) * sourceArray.length);
+    getTotalItemsHeight(itemsCount) {
+        return itemsCount * itemHeight;
+    }
 
-        const beginFull = elementsOffset - this.state.offsetItemsCount;
-        const begin = beginFull > 0 ? beginFull : 0;
-
-        const endFull = elementsOffset + this.state.visibleItemsCount + this.state.offsetItemsCount;
-        const end = sourceArray.length > endFull ? endFull : sourceArray.length;
-
+    calculateVisibleRange(sourceArray, topOffset, {offset=OFFSET_ITEMS_COUNT}={}) {
+        const elementsOffset = Math.ceil( (topOffset / this.getTotalItemsHeight(sourceArray.length)) * sourceArray.length);
+        const begin = elementsOffset - offset;
+        const end = elementsOffset + VIEWPORT_ITEMS_COUNT + offset - 1;
         return {
-            items: sourceArray.slice(begin, end),
-            totalHeight: totalHeight,
-            beginOverlayHeight: begin * this.state.itemHeight,
-            endOverlayHeight: (sourceArray.length - end) * this.state.itemHeight
+            begin: begin > 0 ? begin : 0,
+            end: sourceArray.length > end ? end : sourceArray.length
         }
     }
 
-    updateViewport(scrollTop, type='hidden') {
+    calculateViewport(sourceArray, topOffset) {
+        const range = this.calculateVisibleRange(sourceArray, topOffset);
+
+        return {
+            items: sourceArray.slice(range.begin, range.end),
+            totalHeight: this.getTotalItemsHeight(sourceArray.length),
+            beginOverlayHeight: range.begin * itemHeight,
+            endOverlayHeight: (sourceArray.length - range.end) * itemHeight
+        }
+    }
+
+    updateViewport(type='hidden') {
         this.setState({
-            [`${type}TreeViewport`]: this.calculateViewport(this.state[`${type}Items`], scrollTop)
+            [`${type}TreeViewport`]: this.calculateViewport(this.state[`${type}Items`], this[`${type}Container`].scrollTop)
         });
     }
 
@@ -291,7 +339,7 @@ export default class TreeSelectionComponent extends React.Component {
             filterText,
             filterTextArray,
             hiddenItems,
-            hiddenTreeViewport: this.calculateViewport(hiddenItems, this.state.hiddenScrollTop)
+            hiddenTreeViewport: this.calculateViewport(hiddenItems, this.hiddenContainer.scrollTop)
         });
     }
 
@@ -299,10 +347,34 @@ export default class TreeSelectionComponent extends React.Component {
         if (this.state.rootIds.indexOf(itemId) !== -1) return;
         this.setState({
             selectedItemId: itemId
-        })
+        }, () => {
+            const container = this[`${this.selectedItemType}Container`];
+            const range = this.calculateVisibleRange(
+                this.selectedItemCollection,
+                container.scrollTop,
+                {offset: 0}
+            );
+
+            if (this.selectedItemIndex < range.begin) {
+                container.scrollTop = this.selectedItemIndex * itemHeight;
+                return;
+            }
+            if (this.selectedItemIndex > range.end) {
+                container.scrollTop =
+                    (this.selectedItemIndex - VIEWPORT_ITEMS_COUNT) * itemHeight;
+            }
+        });
     }
 
-    move(direction) {
+    moveDown() {
+        this._move('down');
+    }
+
+    moveUp() {
+        this._move('up');
+    }
+
+    _move(direction) {
 
         // do not move hidden items
         if (this.state.hash[this.state.selectedItemId].isHidden) return;
@@ -312,12 +384,58 @@ export default class TreeSelectionComponent extends React.Component {
         // unable to move an item
         if (updatedHash === null) return;
 
+        let visibleItems = Tree.getVisibleItems(this.state.rootIds, updatedHash);
         this.setState({
             hash: updatedHash,
-            visibleItems: Tree.getVisibleItems(this.state.rootIds, updatedHash)
-        })
+            visibleItems,
+            visibleTreeViewport: this.calculateViewport(visibleItems, this.visibleContainer.scrollTop)
+        });
     }
 
+    getProjectsListTd({type, copy, copyIcon, searchElement, filterTextArray=null}) {
+        const capitalizedType = type[0].toUpperCase() + type.substr(1);
+        return (
+            <td className={`projects-cell projects-cell__${type}`}>
+                <div className="projects">
+                    <div className="projects__title">{capitalizedType} projects:</div>
+                    {searchElement}
+                    <div className="projects__list-container" style={{
+                        height: itemHeight * (VIEWPORT_ITEMS_COUNT + 1)
+                    }} ref={(container) => {
+                        this[`${type}Container`] = container;
+                    }} onScroll={function() {
+                        this.updateViewport(type);
+                    }.bind(this)}>
+                        <PlainTreeView
+                            viewport={this.state[`${type}TreeViewport`]}
+                            copy={copy}
+                            select={this.selectItem.bind(this)}
+                            copyIcon={copyIcon}
+                            selectedItemId={this.state.selectedItemId}
+                            filterTextArray={filterTextArray}
+                        />
+                    </div>
+                </div>
+            </td>
+        )
+    }
+
+    getSearchInput() {
+        return (
+            <div className="projects__search">
+                <input className="input" onKeyUp={this.filter.bind(this)} onKeyDown={event => {
+                    let key = event.keyCode || event.which;
+                    if (ARROW_KEY[key]) {
+                        event.preventDefault();
+                    }
+                }}/>
+            </div>
+        )
+    }
+
+    save() {
+        this.props.onSave(Tree.getVisibleItemsIds(this.state.rootIds, this.state.hash));
+    }
 
     render() {
         return (
@@ -325,6 +443,7 @@ export default class TreeSelectionComponent extends React.Component {
                 title="Configure visible projects"
                 isOpened={this.props.isOpened}
                 onClose={this.props.onClose}
+                onSave={this.save.bind(this)}
             >
                 <div className="projects-form__loading" ref={(loader) => { this.loader = loader; }}>
                     <div className="projects-form__loading-overlay"></div>
@@ -336,56 +455,22 @@ export default class TreeSelectionComponent extends React.Component {
                     <tbody>
                         <tr>
                             <td>
-                                <a className="material-icons" onClick={function(event) {
-                                    this.move('up');
-                                }.bind(this)}>arrow_upward</a>
-                                <a className="material-icons" onClick={function(event) {
-                                    this.move('down');
-                                }.bind(this)}>arrow_downward</a>
+                                <a className="material-icons" onClick={this.moveUp.bind(this)}>arrow_upward</a>
+                                <a className="material-icons" onClick={this.moveDown.bind(this)}>arrow_downward</a>
                             </td>
-                            <td className="projects-cell projects-cell__visible">
-                                <div className="projects">
-                                    <div className="projects__title">Visible projects:</div>
-                                    <div className="projects__list-container" onScroll={function(event) {
-                                        event.persist();
-                                        this.updateViewport(event.target.scrollTop, 'visible');
-                                    }.bind(this)}>
-                                        <PlainTreeView
-                                            viewport={this.state.visibleTreeViewport}
-                                            copy={this.setHidden.bind(this)}
-                                            select={this.selectItem.bind(this)}
-                                            copyIcon="arrow_forward"
-                                            selectedItemId={this.state.selectedItemId}
-                                        />
-                                    </div>
-                                </div>
-                            </td>
-                            <td className="projects-cell projects-cell__hidden">
-                                <div className="projects">
-                                    <div className="projects__title">Hidden projects:</div>
-                                    <div className="projects__search">
-                                        <input className="input" onKeyUp={this.filter.bind(this)} onKeyDown={event => {
-                                            let key = event.keyCode || event.which;
-                                            if (ARROW_KEY[key]) {
-                                                event.preventDefault();
-                                            }
-                                        }}/>
-                                    </div>
-                                    <div className="projects__list-container" onScroll={function(event) {
-                                        event.persist();
-                                        this.updateViewport(event.target.scrollTop, 'hidden');
-                                    }.bind(this)}>
-                                        <PlainTreeView
-                                            viewport={this.state.hiddenTreeViewport}
-                                            copy={this.setVisible.bind(this)}
-                                            select={this.selectItem.bind(this)}
-                                            copyIcon="arrow_back"
-                                            selectedItemId={this.state.selectedItemId}
-                                            filterTextArray={this.state.filterTextArray}
-                                        />
-                                    </div>
-                                </div>
-                            </td>
+                            {this.getProjectsListTd({
+                                type: 'visible',
+                                copy: this.setHidden.bind(this),
+                                copyIcon: 'arrow_forward',
+                                searchElement: null
+                            })}
+                            {this.getProjectsListTd({
+                                type: 'hidden',
+                                copy: this.setVisible.bind(this),
+                                copyIcon: 'arrow_back',
+                                searchElement: this.getSearchInput(),
+                                filterTextArray: this.state.filterTextArray
+                            })}
                         </tr>
                     </tbody>
                 </table>
