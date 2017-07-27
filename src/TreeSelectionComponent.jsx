@@ -94,10 +94,11 @@ class TreeNodeView extends React.Component {
                     event.preventDefault();
                     event.stopPropagation();
                 }.bind(this)}>{this.props.copyIcon}</a>
-                <div className="projects__project-name">
+                <div className={`projects__project-name${this.props.item.isGhost ? ' projects__project-name_ghost' : ''}`}>
                     {this.getName.apply(this)}
                     {this.props.item.isHidden ? '[H]' : '[V]'}
                     {this.props.item.hasHiddenChildren ? '[HC]' : ''}
+                    {this.props.item.isGhost ? '[G]' : ''}
                 </div>
             </li>
         );
@@ -169,8 +170,11 @@ export default class TreeSelectionComponent extends React.Component {
 
     componentDidMount() {
         ProjectsModel.getProjectsAsync().then(rawData => {
-            let hash = Tree.constructHash(rawData, this.props.visibleItemsIds);
+            let hash = Tree.constructHash(rawData);
             let rootIds = Tree.getRootIds(rawData);
+            if (this.props.visibleItemsIds && this.props.visibleItemsIds.length) {
+                hash = Tree.setVisibleItems(rootIds, hash, this.props.visibleItemsIds);
+            }
             this.setState({
                 rootIds
             });
@@ -209,6 +213,7 @@ export default class TreeSelectionComponent extends React.Component {
         this[`set${capitalizedType}`](this.selectedItem.id);
         let collection = this.state[[`${previousType}Items`]];
 
+
         this.selectItem(
             collection[selectedItemIndex]
                 ? collection[selectedItemIndex].id
@@ -240,11 +245,21 @@ export default class TreeSelectionComponent extends React.Component {
                 break;
             case 'up':
                 if (this.selectedItemIndex === 0) break;
-                this.selectItem(this.selectedItemCollection[this.selectedItemIndex - 1].id);
+                for (let i = this.selectedItemIndex - 1; i>=0; i--) {
+                    if (this.selectedItemCollection[i].isHidden === this.selectedItem.isHidden) {
+                        this.selectItem(this.selectedItemCollection[i].id);
+                        break;
+                    }
+                }
                 break;
             case 'down':
                 if (this.selectedItemIndex === this.selectedItemCollection.length - 1) break;
-                this.selectItem(this.selectedItemCollection[this.selectedItemIndex + 1].id);
+                for (let i = this.selectedItemIndex + 1; i < this.selectedItemCollection.length; i++) {
+                    if (this.selectedItemCollection[i].isHidden === this.selectedItem.isHidden) {
+                        this.selectItem(this.selectedItemCollection[i].id);
+                        break;
+                    }
+                }
                 break;
             default:
                 throw `TreeSelectionComponent.moveSelectionCursor: Invalid direction passed: ${direction}`;
@@ -411,7 +426,7 @@ export default class TreeSelectionComponent extends React.Component {
                             copy={copy}
                             select={this.selectItem.bind(this)}
                             copyIcon={copyIcon}
-                            selectedItemId={this.state.selectedItemId}
+                            selectedItemId={this.selectedItemType === type ? this.state.selectedItemId : null}
                             filterTextArray={filterTextArray}
                         />
                     </div>

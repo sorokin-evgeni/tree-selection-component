@@ -15,12 +15,12 @@ function getNode(nodeId, hash) {
     return hash[nodeId];
 }
 
-function getItemForArray(id, hash, {level=0, name}={}) {
+function getItemForArray(id, hash, {level=0, name, isGhost=false}={}) {
     let
         item = getNode(id, hash),
         {isHidden, hasHiddenChildren} = item;
 
-    return { id, isHidden, hasHiddenChildren, name: name || item.name, level};
+    return { id, isHidden, hasHiddenChildren, name: name || item.name, level, isGhost};
 }
 
 function findVisibleParent(id, hash) {
@@ -39,10 +39,10 @@ function getParents(itemId, hash) {
 
 function forEachChildren(itemId, hash, callback, {includeSelf = true}={}) {
     const node = getNode(itemId, hash);
-    includeSelf && callback(node);
     node.children && node.children.forEach(itemId => {
-        forEachChildren(itemId, hash, callback, {includeSelf});
+        forEachChildren(itemId, hash, callback, {includeSelf: true});
     });
+    includeSelf && callback(node);
 }
 
 function _getVisibleItems(rootIds, hash, level=1) {
@@ -118,7 +118,7 @@ function _getHiddenItems(rootIds, hash, {level=1, query=null}) {
             }
         }
 
-        result.push(getItemForArray(id, hash, {level}));
+        result.push(getItemForArray(id, hash, {level, isGhost: !hash[id].isHidden}));
         result = result.concat(
             _getHiddenItems(
                 hash[id].children,
@@ -133,20 +133,68 @@ function _getHiddenItems(rootIds, hash, {level=1, query=null}) {
     return result;
 }
 
-function filterTree(rootIds, hash, callback) {
+function getVisibleItemIds(rootIds, hash) {
     let result = [];
     rootIds.forEach(id => {
-        if (callback(hash[id])) {
-            result.push(id);
-        }
-        hash[id].children.length && (result = result.concat(filterTree(hash[id].children, hash, callback)));
+        if (hash[id].isHidden) return;
+        result.push(hash[id].id);
+        if (!hash[id].sortedChildren || !hash[id].sortedChildren.length) return;
+        result = result.concat(getVisibleItemIds(hash[id].sortedChildren.map(item => item.id), hash));
     });
     return result;
 }
 
+function calcHasHiddenChildren(parent, hash) {
+    return parent.children.reduce(function(hasHiddenChildren, itemId) {
+        const item = getNode(itemId, hash);
+        return hasHiddenChildren || item.isHidden || item.hasHiddenChildren;
+    }, false);
+}
+
+function updateSortedChildren(itemId, hash) {
+    let visibleParentFound = false;
+    let namePrefix = '';
+
+    getParents(itemId, hash).forEach(parent => {
+        if (visibleParentFound) return;
+
+        if (parent.isHidden) {
+            namePrefix = parent.name + NAME_SEPARATOR + namePrefix;
+            return;
+        }
+
+        visibleParentFound = true;
+        !parent.sortedChildren && (parent.sortedChildren = []);
+        parent.sortedChildren.push({
+            id: itemId,
+            name: namePrefix + hash[itemId].name
+        });
+    });
+}
+
+function removeDuplicates(itemId, hash) {
+    let visibleParentFound = false;
+    getParents(itemId, hash).forEach(parent => {
+        if (visibleParentFound || parent.isHidden) return;
+
+        visibleParentFound = true;
+
+        if (parent.sortedChildren.length === 1 || hash[itemId].children.length === 0) return;
+        for (let i = 0; i < parent.sortedChildren.length; i++) {
+            let siblingItemParents = getParents(parent.sortedChildren[i].id, hash);
+            let parentIndex = siblingItemParents.findIndex(parent => parent.id === itemId);
+            if (parentIndex === -1) {
+                continue;
+            }
+            parent.sortedChildren.splice(i, 1);
+            i--;
+        }
+    });
+}
+
 const Tree = {
 
-    constructHash(rawData, visibleItems=[]) {
+    constructHash(rawData) {
         Benchmark.start('constructHash');
         let hash = {};
 
@@ -179,14 +227,30 @@ const Tree = {
             hash[hash[id].parentId].children.push(id);
         });
 
-        visibleItems.forEach(id => {
-            hash = this.setVisible(id, hash, {
-                recursive: false,
-                clone: false
+        Benchmark.stop('constructHash');
+        return hash;
+    },
+
+    setVisibleItems(rootIds, hash, visibleItemsIds) {
+
+        if (!visibleItemsIds.length) return hash;
+
+        // set is hidden
+        visibleItemsIds.forEach(id => {
+            hash[id].isHidden = false;
+        });
+
+        // update hasHiddenChildren for all items in tree
+        rootIds.forEach(id => {
+            forEachChildren(id, hash, item => {
+                item.hasHiddenChildren = calcHasHiddenChildren(item, hash);
             });
         });
 
-        Benchmark.stop('constructHash');
+        visibleItemsIds.forEach(itemId => {
+            updateSortedChildren(itemId, hash);
+        });
+
         return hash;
     },
 
@@ -237,35 +301,12 @@ const Tree = {
             });
         });
 
-        let visibleParentFound = false;
-        let namePrefix = '';
         getParents(itemId, hash).forEach(parent => {
-            parent.hasHiddenChildren = parent.children.reduce(function(hasHiddenChildren, itemId) {
-                const item = getNode(itemId, hash);
-                return hasHiddenChildren || item.isHidden || item.hasHiddenChildren;
-            }, false);
-            if (visibleParentFound) return;
-            if (parent.isHidden) {
-                namePrefix = parent.name + NAME_SEPARATOR + namePrefix;
-                return;
-            }
-            visibleParentFound = true;
-            !parent.sortedChildren && (parent.sortedChildren = []);
-            parent.sortedChildren.push({
-                id: itemId,
-                name: namePrefix + hash[itemId].name
-            });
-            if (parent.sortedChildren.length === 1 || hash[itemId].children.length === 0) return;
-            for (let i = 0; i < parent.sortedChildren.length; i++) {
-                let siblingItemParents = getParents(parent.sortedChildren[i].id, hash);
-                let parentIndex = siblingItemParents.findIndex(parent => parent.id === itemId);
-                if (parentIndex === -1) {
-                    continue;
-                }
-                parent.sortedChildren.splice(i, 1);
-                i--;
-            }
+            parent.hasHiddenChildren = calcHasHiddenChildren(parent, hash);
         });
+
+        updateSortedChildren(itemId, hash);
+        removeDuplicates(itemId, hash);
 
         Benchmark.stop('setVisible');
         return hash;
@@ -346,9 +387,7 @@ const Tree = {
 
     getVisibleItemsIds(rootIds, hash) {
         Benchmark.start('getVisibleItemsIds');
-        const visibleItemsIds = filterTree(rootIds, hash, item => {
-            return !item.isHidden;
-        });
+        const visibleItemsIds = getVisibleItemIds(rootIds, hash);
 
         Benchmark.stop('getVisibleItemsIds');
         return visibleItemsIds;
