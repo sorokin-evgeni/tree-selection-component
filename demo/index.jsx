@@ -1,6 +1,6 @@
 import ReactDOM from 'react-dom';
 import React from 'react';
-import TreeSelectionComponent from '../src/TreeSelectionComponent.jsx';
+import {TreeSelectionComponent} from '../src';
 
 class MainLayout extends React.Component {
 
@@ -21,7 +21,6 @@ class MainLayout extends React.Component {
 
     save(selectedItemsIds) {
         window.localStorage.setItem('visibleProjects', JSON.stringify(selectedItemsIds));
-        console.log('SAVE');
         return Promise.resolve().then(() => {
             this.toggleVisibleProjects(false);
         });

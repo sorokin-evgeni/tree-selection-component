@@ -1,39 +1,11 @@
 import React from 'react';
-import Modal from './components/modal';
-import Tree from './Tree';
-import ProjectsModel from './model/Projects';
-import Benchmark from './utils/Benchmark';
+import Modal from '../components/modal';
+import Tree from '../model/Tree';
+import ProjectsModel from '../model/Projects';
+import Benchmark from '../utils/Benchmark';
 import debounce from 'throttle-debounce/debounce';
-import './less/main.less';
-
-//for IE9:
-import 'phantomjs-polyfill/bind-polyfill.js';
-import 'phantomjs-polyfill-find-index/findIndex-polyfill.js';
-import 'phantomjs-polyfill-find/find-polyfill.js';
-if (typeof Object.assign != 'function') {
-    Object.assign = function(target, varArgs) { // .length of function is 2
-        'use strict';
-        if (target == null) { // TypeError if undefined or null
-            throw new TypeError('Cannot convert undefined or null to object');
-        }
-
-        var to = Object(target);
-
-        for (var index = 1; index < arguments.length; index++) {
-            var nextSource = arguments[index];
-
-            if (nextSource != null) { // Skip over if undefined or null
-                for (var nextKey in nextSource) {
-                    // Avoid bugs when hasOwnProperty is shadowed
-                    if (Object.prototype.hasOwnProperty.call(nextSource, nextKey)) {
-                        to[nextKey] = nextSource[nextKey];
-                    }
-                }
-            }
-        }
-        return to;
-    };
-}
+import PlainTreeView from './PlainTreeView.jsx';
+import '../less/main.less';
 
 const ARROW_KEY = {
         37: 'left',
@@ -49,87 +21,6 @@ const ARROW_KEY = {
 
 // it is not const because it can be calculated if need.
 let itemHeight = 24;
-
-class TreeNodeView extends React.Component {
-
-    highlightCall(filterArray, name, key) {
-        return filterArray.length ? [...this.highlight(name, filterArray, key++)] : [name];
-    }
-
-    highlight(name, filterArraySource, key=1) {
-        let filterArray = [...filterArraySource];
-        let filterText = filterArray.pop();
-        let filterTextIndex = name.toLowerCase().indexOf(filterText);
-        if (filterTextIndex === -1) {
-            return this.highlightCall(filterArray, name, key);
-        }
-        return [
-            this.highlightCall(filterArray, name.substr(0, filterTextIndex), key),
-            <span className="projects__project-name-highlight" key={key}>
-                {name.substr(filterTextIndex, filterText.length)}
-            </span>,
-            this.highlightCall(filterArray, name.substr(filterTextIndex + filterText.length), key),
-        ];
-    }
-
-    getName() {
-        let name = this.props.item.name;
-        if (!this.props.filterTextArray || !this.props.filterTextArray.length) {
-            return name;
-        }
-
-        return this.highlight(name, this.props.filterTextArray);
-    }
-
-    render() {
-        return (
-            <li
-                className={`level_${this.props.item.level}${this.props.isSelected ? ' projects__project-selected' : ''}`}
-                onClick={function() {
-                    this.props.select(this.props.item.id);
-                }.bind(this)}
-            >
-                <a href="#" className="material-icons projects__copy-button" onClick={function(event) {
-                    this.props.copy(this.props.item.id);
-                    event.preventDefault();
-                    event.stopPropagation();
-                }.bind(this)}>{this.props.copyIcon}</a>
-                <div className={`projects__project-name${this.props.item.isGhost ? ' projects__project-name_ghost' : ''}`}>
-                    {this.getName.apply(this)}
-                    {this.props.item.isHidden ? '[H]' : '[V]'}
-                    {this.props.item.hasHiddenChildren ? '[HC]' : ''}
-                    {this.props.item.isGhost ? '[G]' : ''}
-                </div>
-            </li>
-        );
-    }
-}
-
-class PlainTreeView extends React.Component {
-
-    render() {
-        if (!this.props.viewport.items) return null;
-        return (
-            <ul style={{height: this.props.viewport.totalHeight}}>
-                <li style={{height: this.props.viewport.beginOverlayHeight}}></li>
-                {this.props.viewport.items.map(item => {
-                    return (
-                        <TreeNodeView
-                            item={item}
-                            key={item.id}
-                            copy={this.props.copy}
-                            copyIcon={this.props.copyIcon}
-                            select={this.props.select}
-                            isSelected={this.props.selectedItemId === item.id}
-                            filterTextArray={this.props.filterTextArray}
-                        />
-                    )
-                })}
-                <li style={{height: this.props.viewport.endOverlayHeight}}></li>
-            </ul>
-        )
-    }
-}
 
 export default class TreeSelectionComponent extends React.Component {
 
@@ -149,6 +40,14 @@ export default class TreeSelectionComponent extends React.Component {
     get selectedItemIndex() {
         if (!this.selectedItemCollection) return -1;
         return this.selectedItemCollection.findIndex(item => item.id === this.state.selectedItemId);
+    }
+
+    selectNext() {
+        for (let i = this.selectedItemIndex + 1; i < this.selectedItemCollection.length; i++) {
+            if (this.selectedItemCollection[i].isHidden === this.selectedItem.isHidden) {
+                this.selectItem(this.selectedItemCollection[i].id);
+            }
+        }
     }
 
     constructor(props) {
@@ -360,9 +259,11 @@ export default class TreeSelectionComponent extends React.Component {
 
     selectItem(itemId) {
         if (this.state.rootIds.indexOf(itemId) !== -1) return;
+        const isEqual = itemId === this.state.selectedItemId;
         this.setState({
-            selectedItemId: itemId
+            selectedItemId: isEqual ? null : itemId
         }, () => {
+            if (isEqual) return;
             const container = this[`${this.selectedItemType}Container`];
             const range = this.calculateVisibleRange(
                 this.selectedItemCollection,
@@ -412,8 +313,10 @@ export default class TreeSelectionComponent extends React.Component {
         return (
             <td className={`projects-cell projects-cell__${type}`}>
                 <div className="projects">
-                    <div className="projects__title">{capitalizedType} projects:</div>
-                    {searchElement}
+                    <div className="projects__title">{capitalizedType} projects</div>
+                    <div className="projects__search">
+                        {searchElement || ' '}
+                    </div>
                     <div className="projects__list-container" style={{
                         height: itemHeight * (VIEWPORT_ITEMS_COUNT + 1)
                     }} ref={(container) => {
@@ -437,14 +340,12 @@ export default class TreeSelectionComponent extends React.Component {
 
     getSearchInput() {
         return (
-            <div className="projects__search">
-                <input className="input" onKeyUp={this.filter.bind(this)} onKeyDown={event => {
-                    let key = event.keyCode || event.which;
-                    if (ARROW_KEY[key]) {
-                        event.preventDefault();
-                    }
-                }}/>
-            </div>
+            <input placeholder="Search" className="input" onKeyUp={this.filter.bind(this)} onKeyDown={event => {
+                let key = event.keyCode || event.which;
+                if (ARROW_KEY[key]) {
+                    event.preventDefault();
+                }
+            }}/>
         )
     }
 
@@ -459,6 +360,7 @@ export default class TreeSelectionComponent extends React.Component {
                 isOpened={this.props.isOpened}
                 onClose={this.props.onClose}
                 onSave={this.save.bind(this)}
+                className="projects-modal"
             >
                 <div className="projects-form__loading" ref={(loader) => { this.loader = loader; }}>
                     <div className="projects-form__loading-overlay"></div>
@@ -469,7 +371,7 @@ export default class TreeSelectionComponent extends React.Component {
                 <table>
                     <tbody>
                         <tr>
-                            <td>
+                            <td className="projects-form__sort-actions">
                                 <a className="material-icons" onClick={this.moveUp.bind(this)}>arrow_upward</a>
                                 <a className="material-icons" onClick={this.moveDown.bind(this)}>arrow_downward</a>
                             </td>
@@ -479,6 +381,7 @@ export default class TreeSelectionComponent extends React.Component {
                                 copyIcon: 'arrow_forward',
                                 searchElement: null
                             })}
+                            <td className="projects-form__sort-actions"/>
                             {this.getProjectsListTd({
                                 type: 'hidden',
                                 copy: this.setVisible.bind(this),
@@ -486,6 +389,7 @@ export default class TreeSelectionComponent extends React.Component {
                                 searchElement: this.getSearchInput(),
                                 filterTextArray: this.state.filterTextArray
                             })}
+                            <td className="projects-form__sort-actions"/>
                         </tr>
                     </tbody>
                 </table>

@@ -4,7 +4,7 @@ const path = require('path'),
 module.exports = {
 
     entry: {
-        treeSelectionComponent: './src/TreeSelectionComponent.jsx',
+        treeSelectionComponent: './src/views/TreeSelectionComponent.jsx',
         demo: './demo/index.jsx'
     },
 

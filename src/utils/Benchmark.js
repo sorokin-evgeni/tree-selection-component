@@ -1,18 +1,20 @@
 import Logger from './Logger';
 
-let Benchmark = {
+const Benchmark = {
 
     labels: {},
 
-    start: function(label) {
+    start(label) {
         this.labels[label] = Date.now();
     },
 
-    stop: function(label, {output = true}={}) {
-        let diff = Date.now() - this.labels[label];
+    stop(label, {output = true} = {}) {
+        const diff = Date.now() - this.labels[label];
+
         if (output) {
             Logger.debug(`Benchmark:${label} = ${diff}`);
         }
+
         return diff;
     }
 };

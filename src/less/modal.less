@@ -17,20 +17,19 @@
 }
 
 .modal {
-    position: absolute;
+    position: relative;
     min-width: 600px;
     box-shadow: 0 0 0 1px rgba(0,0,0,.15),0 8px 30px -5px rgba(0,0,0,.5);
-    //top: 50%;
+    top: 50%;
     //left: 50%;
     background: white;
-    //transform: translate(-50%, -50%);
+    transform: translate(0, -50%);
     z-index: 110;
-    top: 100px;
-    left: 100px;
+    margin: 0 auto;
 }
 
 .modal__header {
-    line-height: @h2-font-size;
+    line-height: @h2-line-height;
     font-size: @h2-font-size;
     padding: @base-padding;
     position: relative;
@@ -42,7 +41,7 @@
         top: 50%;
         transform: translate(0, -50%);
         color: @color-typo-secondary;
-        font-size: @space-m;
+        font-size: @space-l;
     }
 }
 

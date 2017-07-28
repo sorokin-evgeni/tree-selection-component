@@ -1,12 +1,10 @@
 import Tree from './Tree';
 import {expect} from 'chai';
 
-describe('Tree operations', function() {
-
+describe('Tree operations', () => {
     let hash;
 
-    beforeEach(function() {
-
+    beforeEach(() => {
         hash = {
             root: {
                 id: 'root',
@@ -71,16 +69,14 @@ describe('Tree operations', function() {
         };
     });
 
-    describe('Test constructHash function', function() {
-
-        it('should add items to hash', function() {
-
+    describe('Test constructHash function', () => {
+        it('should add items to hash', () => {
             const rawData = [{
-                "id": "_Root",
-                "name": "Root project",
-                "buildTypes": {
-                    "count": 0,
-                    "buildType": []
+                id: '_Root',
+                name: 'Root project',
+                buildTypes: {
+                    count: 0,
+                    buildType: []
                 }
             }];
 
@@ -89,19 +85,19 @@ describe('Tree operations', function() {
             expect(hash['_Root'] !== undefined).to.be.true;
         });
 
-        it('should set isHidden = true by default for no root items', function() {
+        it('should set isHidden = true by default for no root items', () => {
             const rawData = [{
-                "id": "_Root",
-                "name": "Root project",
-                "buildTypes": {
-                    "count": 0,
-                    "buildType": []
+                id: '_Root',
+                name: 'Root project',
+                buildTypes: {
+                    count: 0,
+                    buildType: []
                 }
             }, {
-                "id": "OpenSourceProjects",
-                "name": "OpenSourceProjects",
-                "parentProject": {
-                    "id": "_Root"
+                id: 'OpenSourceProjects',
+                name: 'OpenSourceProjects',
+                parentProject: {
+                    id: '_Root'
                 }
             }];
 
@@ -110,52 +106,52 @@ describe('Tree operations', function() {
             expect(hash['OpenSourceProjects'].isHidden).to.be.true;
         });
 
-        it('should set parentId', function() {
+        it('should set parentId', () => {
             const item = {
-                "id": "OpenSourceProjects",
-                "name": "Open-source projects",
-                "parentProject": {
-                    "id": "_Root"
+                id: 'OpenSourceProjects',
+                name: 'Open-source projects',
+                parentProject: {
+                    id: '_Root'
                 },
-                "buildTypes": {
-                    "count": 0,
-                    "buildType": []
+                buildTypes: {
+                    count: 0,
+                    buildType: []
                 }
             };
 
             hash = Tree.constructHash([item, {
-                "id": "_Root",
-                "name": "Root project",
-                "buildTypes": {
-                    "count": 0,
-                    "buildType": []
+                id: '_Root',
+                name: 'Root project',
+                buildTypes: {
+                    count: 0,
+                    buildType: []
                 }
             }]);
 
             expect(hash['OpenSourceProjects'].parentId).to.equal('_Root');
         });
 
-        it('should calculate children', function() {
+        it('should calculate children', () => {
             const rawData = [{
-                "id": "_Root",
-                "name": "Root"
+                id: '_Root',
+                name: 'Root'
             }, {
-                "id": "OpenSourceProjects",
-                "name": "Open-source projects",
-                "parentProject": {
-                    "id": "_Root"
+                id: 'OpenSourceProjects',
+                name: 'Open-source projects',
+                parentProject: {
+                    id: '_Root'
                 }
             }, {
-                "id": "ApacheAnt",
-                "name": "Apache Ant",
-                "parentProject": {
-                    "id": "OpenSourceProjects"
+                id: 'ApacheAnt',
+                name: 'Apache Ant',
+                parentProject: {
+                    id: 'OpenSourceProjects'
                 }
             }, {
-                "id": "ApacheAnt2",
-                "name": "Apache Ant",
-                "parentProject": {
-                    "id": "OpenSourceProjects"
+                id: 'ApacheAnt2',
+                name: 'Apache Ant',
+                parentProject: {
+                    id: 'OpenSourceProjects'
                 }
             }];
 
@@ -167,32 +163,26 @@ describe('Tree operations', function() {
         });
     });
 
-    describe('Test getRootIds function', function() {
-
-        it('should find projects with empty parent', function() {
-
+    describe('Test getRootIds function', () => {
+        it('should find projects with empty parent', () => {
             const rawData = [{
-                "id": "_Root"
+                id: '_Root'
             }, {
-                "id": "OpenSourceProjects",
-                "parentProject": {
-                    "id": "_Root"
+                id: 'OpenSourceProjects',
+                parentProject: {
+                    id: '_Root'
                 }
             }, {
-                "id": "__Root",
-                "parentProject": {}
+                id: '__Root',
+                parentProject: {}
             }];
 
             expect(Tree.getRootIds(rawData)).to.eql(['_Root', '__Root']);
-
         });
-
     });
 
-    describe('Test setHidden function', function() {
-
-        it('should change isHidden to true', function() {
-
+    describe('Test setHidden function', () => {
+        it('should change isHidden to true', () => {
             hash = {
                 root: {
                     isHidden: false
@@ -202,22 +192,19 @@ describe('Tree operations', function() {
             expect(Tree.setHidden('root', hash)['root'].isHidden).to.be.true;
         });
 
-        it('should change for all children isHidden to true', function() {
-
+        it('should change for all children isHidden to true', () => {
             hash = Tree.setHidden('root_1_1', hash);
 
             expect(hash['root_1_1_1'].isHidden && hash['root_1_1_2'].isHidden && hash['root_1_1_3'].isHidden).to.be.true;
         });
 
-        it('should set hasHiddenChildren to true in all parents', function() {
-
+        it('should set hasHiddenChildren to true in all parents', () => {
             hash = Tree.setHidden('root_1_1', hash);
 
             expect(hash['root_1'].hasHiddenChildren && hash['root'].hasHiddenChildren).to.be.true;
         });
 
-        it('should remove item from parent\'s sorted children', function() {
-
+        it('should remove item from parent\'s sorted children', () => {
             hash['root_1'].sortedChildren = [{
                 id: 'root_1_2'
             }, {
@@ -231,28 +218,23 @@ describe('Tree operations', function() {
 
             hash = Tree.setHidden('root_1_1_1', hash);
             expect(hash['root_1'].sortedChildren.find(item => item.id === 'root_1_1_1')).to.be.undefined;
-        })
-
+        });
     });
 
-    describe('Test setVisible function', function() {
-
-        it('should change isHidden to false', function() {
-
+    describe('Test setVisible function', () => {
+        it('should change isHidden to false', () => {
             hash = Tree.setVisible('root', hash);
 
             expect(hash['root'].isHidden).to.be.false;
         });
 
-        it('should change for all children setVisible to false', function() {
-
+        it('should change for all children setVisible to false', () => {
             hash = Tree.setVisible('root_1_1', hash);
 
             expect(hash['root_1_1_1'].isHidden || hash['root_1_1_2'].isHidden || hash['root_1_1_3'].isHidden).to.be.false;
         });
 
-        it('should update parent hasHiddenChildren to false if it has no visible children', function() {
-
+        it('should update parent hasHiddenChildren to false if it has no visible children', () => {
             hash['root_1_1'].hasHiddenChildren = true;
             hash['root_1_1_1'].isHidden = true;
             hash['root_1_1_2'].isHidden = false;
@@ -264,8 +246,7 @@ describe('Tree operations', function() {
             expect(hash['root_1_1'].hasHiddenChildren).to.be.false;
         });
 
-        it('should skip update parent hasHiddenChildren if it has visible children', function() {
-
+        it('should skip update parent hasHiddenChildren if it has visible children', () => {
             hash['root_1_1'].hasHiddenChildren = true;
             hash['root_1_1_1'].isHidden = true;
             hash['root_1_1_2'].isHidden = false;
@@ -277,8 +258,7 @@ describe('Tree operations', function() {
             expect(hash['root_1_1'].hasHiddenChildren).to.be.true;
         });
 
-        it('should update self hasHiddenChildren to false', function() {
-
+        it('should update self hasHiddenChildren to false', () => {
             hash['root_1_1'].hasHiddenChildren = true;
             hash['root_1_1_1'].isHidden = true;
             hash['root_1_1_2'].isHidden = false;
@@ -290,8 +270,7 @@ describe('Tree operations', function() {
             expect(hash['root_1_1_1'].hasHiddenChildren).to.be.false;
         });
 
-        it('should skip update parent hasHiddenChildren if it has children with hasHiddenChildren === true', function() {
-
+        it('should skip update parent hasHiddenChildren if it has children with hasHiddenChildren === true', () => {
             hash['root_1_1'].hasHiddenChildren = true;
             hash['root_1_1_1'].isHidden = true;
             hash['root_1_1_2'].isHidden = false;
@@ -304,8 +283,7 @@ describe('Tree operations', function() {
         });
 
         // sorted children:
-        it('should clone children to sorted children', function() {
-
+        it('should clone children to sorted children', () => {
             hash = Tree.setVisible('root_1', hash);
 
             expect(hash['root_1'].sortedChildren).to.eql([{
@@ -331,8 +309,7 @@ describe('Tree operations', function() {
             }]);
         });
 
-        it('should add new item to first visible parent\'s sorted children, when it is direct parent', function() {
-
+        it('should add new item to first visible parent\'s sorted children, when it is direct parent', () => {
             hash['root_1'].sortedChildren = [{
                 id: 'root_1_2',
                 name: 'root_1_2'
@@ -342,11 +319,10 @@ describe('Tree operations', function() {
 
             hash = Tree.setVisible('root_1_1', hash);
 
-            expect(hash['root_1'].sortedChildren[hash['root_1'].sortedChildren.length-1].id).to.equal('root_1_1');
+            expect(hash['root_1'].sortedChildren[hash['root_1'].sortedChildren.length - 1].id).to.equal('root_1_1');
         });
 
-        it('should add new item to first visible parent\'s sorted children, when it is remote parent', function() {
-
+        it('should add new item to first visible parent\'s sorted children, when it is remote parent', () => {
             hash['root'].sortedChildren = [{
                 id: 'root_1_2',
                 name: 'root_1_2'
@@ -357,10 +333,10 @@ describe('Tree operations', function() {
 
             hash = Tree.setVisible('root_1_1', hash);
 
-            expect(hash['root'].sortedChildren[hash['root'].sortedChildren.length-1].id).to.equal('root_1_1');
+            expect(hash['root'].sortedChildren[hash['root'].sortedChildren.length - 1].id).to.equal('root_1_1');
         });
 
-        it('should copy name to sorted children when direct parent ', function() {
+        it('should copy name to sorted children when direct parent ', () => {
             hash['root_1'].sortedChildren = [{
                 id: 'root_1_2',
                 name: 'root_1_2'
@@ -370,11 +346,10 @@ describe('Tree operations', function() {
 
             hash = Tree.setVisible('root_1_1', hash);
 
-            expect(hash['root_1'].sortedChildren[hash['root_1'].sortedChildren.length-1].name).to.equal('root_1_1');
+            expect(hash['root_1'].sortedChildren[hash['root_1'].sortedChildren.length - 1].name).to.equal('root_1_1');
         });
 
-        it('should generate right name when set visible to item with remote parent', function() {
-
+        it('should generate right name when set visible to item with remote parent', () => {
             hash['root'].sortedChildren = [{
                 id: 'root_1_2',
                 name: 'root_1_2'
@@ -385,11 +360,10 @@ describe('Tree operations', function() {
 
             hash = Tree.setVisible('root_1_1', hash);
 
-            expect(hash['root'].sortedChildren[hash['root'].sortedChildren.length-1].name).to.equal('root_1::root_1_1');
+            expect(hash['root'].sortedChildren[hash['root'].sortedChildren.length - 1].name).to.equal('root_1::root_1_1');
         });
 
-        it('should update parent\'s sortedItems if new item contains some of them', function() {
-
+        it('should update parent\'s sortedItems if new item contains some of them', () => {
             hash['root'].sortedChildren = [{
                 id: 'root_1_1',
                 name: 'root_1_1'
@@ -410,14 +384,12 @@ describe('Tree operations', function() {
             }, {
                 id: 'root_1',
                 name: 'root_1'
-            }])
-        })
+            }]);
+        });
     });
 
-    describe('Test swap function', function() {
-
-        it('should throw an error on attempt to swap nodes with different parents', function() {
-
+    describe('Test swap function', () => {
+        it('should throw an error on attempt to swap nodes with different parents', () => {
             hash['root_1'].sortedChildren = ['root_1_1', 'root_1_2', 'root_1_3'];
 
             function swap() {
@@ -427,8 +399,7 @@ describe('Tree operations', function() {
             expect(swap).to.throw('different parents');
         });
 
-        it('should correctly change sortedChildren', function() {
-
+        it('should correctly change sortedChildren', () => {
             hash['root_1'].sortedChildren = ['root_1_1', 'root_1_2', 'root_1_3'];
 
             hash = Tree.swap('root_1_1', 'root_1_3', hash);
@@ -436,22 +407,17 @@ describe('Tree operations', function() {
             expect(hash['root_1'].sortedChildren).to.eql(['root_1_2', 'root_1_3', 'root_1_1']);
         });
 
-        it('should correctly change sortedChildren when target index is higher', function() {
-
+        it('should correctly change sortedChildren when target index is higher', () => {
             hash['root_1'].sortedChildren = ['root_1_1', 'root_1_2', 'root_1_3'];
 
             hash = Tree.swap('root_1_3', 'root_1_1', hash);
 
             expect(hash['root_1'].sortedChildren).to.eql(['root_1_3', 'root_1_1', 'root_1_2']);
         });
-
-
     });
 
-    describe('Test getVisibleItems', function() {
-
-        it('should extract visible items', function() {
-
+    describe('Test getVisibleItems', () => {
+        it('should extract visible items', () => {
             hash = {
                 root: {
                     id: 'root',
@@ -480,14 +446,12 @@ describe('Tree operations', function() {
                 }
             };
 
-
             const visibleItems = ['root', 'root_2', 'root_2_1'];
 
             expect(Tree.getVisibleItems(['root'], hash).map(item => item.id)).to.eql(visibleItems);
         });
 
-        it('should calculate level for visible items', function() {
-
+        it('should calculate level for visible items', () => {
             hash = {
                 root: {
                     id: 'root',
@@ -527,8 +491,7 @@ describe('Tree operations', function() {
             expect([visibleItems[0].level, visibleItems[1].level]).to.eql([0, 1]);
         });
 
-        it('should calculate level for visible items with siblings', function() {
-
+        it('should calculate level for visible items with siblings', () => {
             hash = {
                 root: {
                     id: 'root',
@@ -556,15 +519,15 @@ describe('Tree operations', function() {
             expect([visibleItems[0].level, visibleItems[1].level, visibleItems[2].level]).to.eql([0, 1, 1]);
         });
 
-        it('should get name from sorted children array', function() {
-
+        it('should get name from sorted children array', () => {
             hash = {
                 root: {
                     id: 'root',
                     parentId: null,
                     isHidden: true,
                     hasHiddenChildren: true,
-                    sortedChildren: [{ id: 'root_1_1', name: 'root_1::root_1_1' }]
+                    sortedChildren: [{ id: 'root_1_1',
+                        name: 'root_1::root_1_1' }]
                 },
                 root_1: {
                     id: 'root_1',
@@ -585,15 +548,11 @@ describe('Tree operations', function() {
             const visibleItems = Tree.getVisibleItems(['root'], hash);
 
             expect(visibleItems[1].name).to.equal('root_1::root_1_1');
-
         });
-
     });
 
-    describe('Test getHiddenItems', function() {
-
-        it('should extract hidden items', function() {
-
+    describe('Test getHiddenItems', () => {
+        it('should extract hidden items', () => {
             hash = {
                 root: {
                     id: 'root',
@@ -622,14 +581,12 @@ describe('Tree operations', function() {
                 }
             };
 
-
             const hiddenItems = ['root_1'];
 
             expect(Tree.getHiddenItems(['root'], hash).map(item => item.id)).to.eql(hiddenItems);
         });
 
-        it('should calculate level for hidden items', function() {
-
+        it('should calculate level for hidden items', () => {
             hash = {
                 root: {
                     id: 'root',
@@ -668,25 +625,25 @@ describe('Tree operations', function() {
             };
 
             const levels = [1, 1, 2];
+
             expect(Tree.getHiddenItems(['root'], hash).map(item => item.level)).to.eql(levels);
         });
 
-        it('should ignore case when match items', function() {
-
+        it('should ignore case when match items', () => {
             hash = {
-                'r': {
+                r: {
                     id: 'r',
                     name: 'r',
                     children: ['root', 'notinfilter'],
                     isHidden: true
                 },
-                'root': {
+                root: {
                     id: 'root',
                     name: 'ROOT',
                     children: [],
                     isHidden: true
                 },
-                'notinfilter': {
+                notinfilter: {
                     id: 'notinfilter',
                     name: 'notinfilter',
                     children: [],
@@ -694,20 +651,20 @@ describe('Tree operations', function() {
                 }
             };
 
-            let hiddenItems = Tree.getHiddenItems(['r'], hash, {query: ['oo']});
-            expect(hiddenItems[0].id).to.equal('root');
+            const hiddenItems = Tree.getHiddenItems(['r'], hash, {query: ['oo']});
 
+            expect(hiddenItems[0].id).to.equal('root');
         });
 
-        it('should exclude not matched items', function() {
+        it('should exclude not matched items', () => {
             hash = {
-                'root': {
+                root: {
                     id: 'root',
                     name: 'ROOT',
                     children: [],
                     isHidden: true
                 },
-                'notinfilter': {
+                notinfilter: {
                     id: 'notinfilter',
                     name: 'notinfilter',
                     children: [],
@@ -715,31 +672,32 @@ describe('Tree operations', function() {
                 }
             };
 
-            let hiddenItems = Tree.getHiddenItems(['root'], hash, {query: ['oo']});
+            const hiddenItems = Tree.getHiddenItems(['root'], hash, {query: ['oo']});
+
             expect(hiddenItems.find(item => item.id === 'notinfilter')).to.be.undefined;
         });
 
-        it('should include all children of matched parent', function() {
+        it('should include all children of matched parent', () => {
             hash = {
-                'root': {
+                root: {
                     id: 'root',
                     name: 'ROOT',
                     children: ['firstoo', 'second'],
                     isHidden: true
                 },
-                'firstoo': {
+                firstoo: {
                     id: 'firstoo',
                     name: 'firstoo',
                     children: ['first1'],
                     isHidden: true
                 },
-                'first1': {
+                first1: {
                     id: 'first',
                     name: 'first',
                     children: [],
                     isHidden: true
                 },
-                'second': {
+                second: {
                     id: 'second',
                     name: 'second',
                     children: [],
@@ -747,31 +705,32 @@ describe('Tree operations', function() {
                 }
             };
 
-            let hiddenItems = Tree.getHiddenItems(['root'], hash, {query: ['oo']});
+            const hiddenItems = Tree.getHiddenItems(['root'], hash, {query: ['oo']});
+
             expect(hiddenItems.length).to.equal(2);
         });
 
-        it('should include parent of matched child', function() {
+        it('should include parent of matched child', () => {
             hash = {
-                'root': {
+                root: {
                     id: 'root',
                     name: 'ROOT',
                     children: ['first', 'second'],
                     isHidden: true
                 },
-                'first': {
+                first: {
                     id: 'first',
                     name: 'first',
                     children: ['first1'],
                     isHidden: true
                 },
-                'first1': {
+                first1: {
                     id: 'first1',
                     name: 'first1',
                     children: [],
                     isHidden: true
                 },
-                'second': {
+                second: {
                     id: 'second',
                     name: 'second',
                     children: [],
@@ -779,56 +738,56 @@ describe('Tree operations', function() {
                 }
             };
 
-            let hiddenItems = Tree.getHiddenItems(['root'], hash, {query: ['1']});
+            const hiddenItems = Tree.getHiddenItems(['root'], hash, {query: ['1']});
+
             expect(hiddenItems[0].id).to.equal('first');
         });
 
-        it('should filter complex queries', function() {
-
+        it('should filter complex queries', () => {
             hash = {
-                'root': {
+                root: {
                     id: 'root',
                     name: 'root',
                     children: ['first', 'second'],
                     isHidden: true
                 },
-                'first': {
+                first: {
                     id: 'first',
                     name: 'first',
                     children: ['hibernate', 'form'],
                     isHidden: true
                 },
-                'form': {
+                form: {
                     id: 'form',
                     name: 'form',
                     children: [],
                     isHidden: true
                 },
-                'hibernate': {
+                hibernate: {
                     id: 'hibernate',
                     name: 'hibernate',
                     children: [],
                     isHidden: true
                 },
-                'second': {
+                second: {
                     id: 'second',
                     name: 'second',
                     children: ['hibernate2'],
                     isHidden: true
                 },
-                'hibernate2': {
+                hibernate2: {
                     id: 'hibernate2',
                     name: 'hibernate2',
                     children: [],
                     isHidden: true
                 },
-                'third': {
+                third: {
                     id: 'third',
                     name: 'third',
                     children: ['all'],
                     isHidden: true
                 },
-                'sirs': {
+                sirs: {
                     id: 'sirs',
                     name: 'sirs',
                     children: [],
@@ -836,25 +795,25 @@ describe('Tree operations', function() {
                 }
             };
 
-            let hiddenItems = Tree.getHiddenItems(['root'], hash, {query: ['irs', 'nate']});
+            const hiddenItems = Tree.getHiddenItems(['root'], hash, {query: ['irs', 'nate']});
+
             expect(hiddenItems.map(item => item.id)).to.eql(['first', 'hibernate']);
         });
 
-        it('should filter by all queries simultaneously', function() {
-
+        it('should filter by all queries simultaneously', () => {
             hash = {
-                'root': {
+                root: {
                     id: 'root',
                     name: 'root',
                     children: ['1', '2']
                 },
-                '1': {
+                1: {
                     id: '1',
                     name: '1',
                     children: [],
                     isHidden: true
                 },
-                '2': {
+                2: {
                     id: '2',
                     name: '2',
                     children: [],
@@ -862,15 +821,14 @@ describe('Tree operations', function() {
                 }
             };
 
-            let hiddenItems = Tree.getHiddenItems(['root'], hash, {query: ['1', '2']});
+            const hiddenItems = Tree.getHiddenItems(['root'], hash, {query: ['1', '2']});
+
             expect(hiddenItems.length).to.equal(0);
         });
-
     });
 
-    describe('Test move', function() {
-
-        it('should return null when item have no visible parent', function() {
+    describe('Test move', () => {
+        it('should return null when item have no visible parent', () => {
             hash['root'].isHidden = true;
 
             hash = Tree.move('root_1', 'up', hash);
@@ -878,7 +836,7 @@ describe('Tree operations', function() {
             expect(hash).to.be.null;
         });
 
-        it('should throw exception if visible parent does not contain item', function() {
+        it('should throw exception if visible parent does not contain item', () => {
             hash['root'].isHidden = false;
 
             function move() {
@@ -888,7 +846,7 @@ describe('Tree operations', function() {
             expect(move).to.throw('data structure is broken');
         });
 
-        it('should return null when item is first and direction is up', function() {
+        it('should return null when item is first and direction is up', () => {
             hash['root'].isHidden = false;
             hash['root'].sortedChildren = [{id: 'root_1'}, {id: 'root_2'}];
 
@@ -897,7 +855,7 @@ describe('Tree operations', function() {
             expect(hash).to.be.null;
         });
 
-        it('should return null when item is last and direction is down', function() {
+        it('should return null when item is last and direction is down', () => {
             hash['root'].isHidden = false;
             hash['root'].sortedChildren = [{id: 'root_2'}, {id: 'root_1'}];
 
@@ -906,8 +864,7 @@ describe('Tree operations', function() {
             expect(hash).to.be.null;
         });
 
-        it('should change items in array when direction is up', function() {
-
+        it('should change items in array when direction is up', () => {
             hash['root'].isHidden = false;
             hash['root'].sortedChildren = [{id: 'root_1_2'}, {id: 'root_1_1'}, {id: 'root_1_3'}];
             hash['root_1'].isHidden = true;
@@ -915,11 +872,9 @@ describe('Tree operations', function() {
             hash = Tree.move('root_1_1', 'up', hash);
 
             expect(hash['root'].sortedChildren.map(item => item.id)).to.eql(['root_1_1', 'root_1_2', 'root_1_3']);
-
         });
 
-        it('should change items in array when direction is down', function() {
-
+        it('should change items in array when direction is down', () => {
             hash['root'].isHidden = false;
             hash['root'].sortedChildren = [{id: 'root_1_2'}, {id: 'root_1_1'}, {id: 'root_1_3'}];
             hash['root_1'].isHidden = true;
@@ -927,15 +882,11 @@ describe('Tree operations', function() {
             hash = Tree.move('root_1_1', 'down', hash);
 
             expect(hash['root'].sortedChildren.map(item => item.id)).to.eql(['root_1_2', 'root_1_3', 'root_1_1']);
-
-        })
-
+        });
     });
 
-    describe('Test getVisibleItemsIds', function() {
-
-        it('should return all visible items ids in correct order', function() {
-
+    describe('Test getVisibleItemsIds', () => {
+        it('should return all visible items ids in correct order', () => {
             hash['root'].sortedChildren = [{id: 'root_1'}];
             hash['root_1'].isHidden = false;
             hash['root_1'].sortedChildren = [{id: 'root_1_3'}, {id: 'root_1_1'}];
@@ -943,16 +894,14 @@ describe('Tree operations', function() {
             hash['root_1_1'].isHidden = false;
 
             expect(Tree.getVisibleItemsIds(['root'], hash)).to.eql(['root', 'root_1', 'root_1_3', 'root_1_1']);
-        })
-
+        });
     });
 
-    describe('Test setVisibleItems', function() {
-
-        it('should set visibility to true for all items', function() {
-
+    describe('Test setVisibleItems', () => {
+        it('should set visibility to true for all items', () => {
             const visibleItems = ['root', 'root_1_3', 'root_2'];
             const rootIds = ['root'];
+
             hash['root'].isHidden = true;
             hash['root_1_3'].isHidden = true;
             hash['root_2'].isHidden = true;
@@ -960,6 +909,7 @@ describe('Tree operations', function() {
             hash = Tree.setVisibleItems(rootIds, hash, visibleItems);
 
             let hasHidden = false;
+
             visibleItems.forEach(id => {
                 if (hash[id].isHidden) {
                     hasHidden = true;
@@ -969,10 +919,10 @@ describe('Tree operations', function() {
             expect(hasHidden).to.be.false;
         });
 
-        it('should calculate hasHiddenChildren on direct children when false', function() {
-
+        it('should calculate hasHiddenChildren on direct children when false', () => {
             const visibleItems = ['root_1_1', 'root_1_2'];
             const rootIds = ['root'];
+
             hash['root_1'].hasHiddenChildren = true;
             hash['root_1'].isHidden = true;
             hash['root_1_1'].hasHiddenChildren = true;
@@ -984,10 +934,10 @@ describe('Tree operations', function() {
             expect(hash['root_1'].hasHiddenChildren).to.be.false;
         });
 
-        it('should calculate hasHiddenChildren on direct children when true', function() {
-
+        it('should calculate hasHiddenChildren on direct children when true', () => {
             const visibleItems = ['root_1_1'];
             const rootIds = ['root'];
+
             hash['root_1'].hasHiddenChildren = true;
             hash['root_1'].isHidden = true;
             hash['root_1_1'].hasHiddenChildren = true;
@@ -999,10 +949,10 @@ describe('Tree operations', function() {
             expect(hash['root_1'].hasHiddenChildren).to.be.true;
         });
 
-        it('should calculate hasHiddenChildren on remote children when true', function() {
-
+        it('should calculate hasHiddenChildren on remote children when true', () => {
             const visibleItems = ['root_1_1', 'root_1_1_1'];
             const rootIds = ['root'];
+
             hash['root_1'].hasHiddenChildren = true;
             hash['root_1'].isHidden = true;
             hash['root_1_1'].hasHiddenChildren = true;
@@ -1016,9 +966,7 @@ describe('Tree operations', function() {
             expect(hash['root_1'].hasHiddenChildren).to.be.true;
         });
 
-
-        it('should create sortedChildren in first visible parent', function() {
-
+        it('should create sortedChildren in first visible parent', () => {
             hash['root'].isHidden = false;
             hash['root_1'].isHidden = true;
             const visibleItems = ['root_1_1'];
@@ -1029,10 +977,10 @@ describe('Tree operations', function() {
             expect(hash['root'].sortedChildren).to.be.an('array').that.is.not.empty;
         });
 
-        it('should add item to sorted children of first visible parent', function() {
-
+        it('should add item to sorted children of first visible parent', () => {
             const rootIds = ['root'];
             const visibleItems = ['root_1', 'root_1_1_1'];
+
             hash['root_1_1'].isHidden = true;
 
             hash = Tree.setVisibleItems(rootIds, hash, visibleItems);
@@ -1040,12 +988,12 @@ describe('Tree operations', function() {
             expect(hash['root_1'].sortedChildren.map(item => item.id)).to.eql(['root_1_1_1']);
         });
 
-        it('should create sortedChildren with correct order', function() {
-
+        it('should create sortedChildren with correct order', () => {
             const rootIds = ['root'];
             const visibleItems = ['root_1', 'root_1_3', 'root_1_2_1', 'root_1_1'];
+
             hash['root_1_2'].isHidden = true;
-            hash['root_1_2'].children=['root_1_2_1'];
+            hash['root_1_2'].children = ['root_1_2_1'];
             hash['root_1_2_1'] = {
                 id: 'root_1_2_1',
                 name: 'root_1_2_1',
@@ -1058,15 +1006,14 @@ describe('Tree operations', function() {
             expect(hash['root_1'].sortedChildren.map(item => item.id)).to.eql(['root_1_3', 'root_1_2_1', 'root_1_1']);
         });
 
-        it('should create sortedChildren with correct names', function() {
+        it('should create sortedChildren with correct names', () => {
             const visibleItems = ['root_1', 'root_1_3', 'root_1_1_1'];
             const rootIds = ['root'];
+
             hash['root_1_1'].isHidden = true;
             hash = Tree.setVisibleItems(rootIds, hash, visibleItems);
 
             expect(hash['root_1'].sortedChildren.map(item => item.name)).to.eql(['root_1_3', 'root_1_1::root_1_1_1']);
         });
-
     });
-
 });

@@ -11,7 +11,7 @@ class Modal extends React.Component {
         return (
             <div className="modal-wrapper">
                 <div className="modal-wrapper__overlay"></div>
-                <div className="modal">
+                <div className={`modal ${this.props.className || ''}`}>
                     <header className="modal__header">
                         {this.props.title}
                         <a className="material-icons modal__close" onClick={this.props.onClose}>close</a>

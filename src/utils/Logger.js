@@ -1,5 +1,4 @@
 
-
 let logLevel = 1;
 
 const Logger = {
@@ -17,11 +16,11 @@ const Logger = {
             return;
         }
         console.log(...args);
-        // args.forEach(text => {
-        //     document.write(text);
-        //     let consoleEl = document.getElementById('console');
-        //     consoleEl.innerHTML += text + '<br/>';
-        // })
+    // args.forEach(text => {
+    //     document.write(text);
+    //     let consoleEl = document.getElementById('console');
+    //     consoleEl.innerHTML += text + '<br/>';
+    // })
     }
 
 };
