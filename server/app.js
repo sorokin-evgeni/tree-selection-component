@@ -1,4 +1,4 @@
-let express = require('express'),
+var express = require('express'),
     fs = require('fs'),
     app = express(),
     path = require('path'),
@@ -16,5 +16,5 @@ app.use('/', function(request, response) {
 });
 
 app.listen(port, function() {
-    console.log(`Server started on port ${port}`);
+    console.log(`Server started on port ${port}. Please open http://localhost:${port} in your browser`);
 });

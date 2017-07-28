@@ -1,5 +1,5 @@
 /**
- *
+ * Projects model.
  */
 
 import 'whatwg-fetch';
@@ -19,7 +19,7 @@ export default {
             .then(sourceRawData => {
                 const rawData = sourceRawData.project.filter(item => !item.parentProject);
 
-                for (let i = 0; i < 1; i++) {
+                for (let i = 0; i < 10; i++) {
                     sourceRawData.project.forEach(item => {
                         if (!item.parentProject) return;
                         const postfix = i ? `#${i}` : '';

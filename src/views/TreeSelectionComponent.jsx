@@ -10,6 +10,7 @@ import Benchmark from '../utils/Benchmark';
 import debounce from 'throttle-debounce/debounce';
 import Viewport from './Viewport.jsx';
 import '../less/main.less';
+import ie9 from '../ie9';
 
 const ARROW_KEY = {
         37: 'left',

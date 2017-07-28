@@ -624,7 +624,7 @@ describe('Tree operations', () => {
                 }
             };
 
-            const levels = [1, 1, 2];
+            const levels = [0,0,1];
 
             expect(Tree.getHiddenItems(['root'], hash).map(item => item.level)).to.eql(levels);
         });

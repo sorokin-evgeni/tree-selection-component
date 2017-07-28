@@ -62,6 +62,7 @@
   },
   "scripts": {
     "build": "webpack",
+    "start": "node server/app.js",
     "eslint": "eslint --fix src",
     "test": "karma start --single-run --browsers PhantomJS",
     "test-watch": "karma start --browsers PhantomJS"
