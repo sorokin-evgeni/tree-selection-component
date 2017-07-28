@@ -57,6 +57,7 @@
     "phantomjs-polyfill-find": "github:ptim/phantomjs-polyfill-find",
     "phantomjs-polyfill-find-index": "^1.0.1",
     "phantomjs-polyfill-object-assign": "0.0.2",
+    "promise-polyfill": "^6.0.2",
     "webpack": "2.4.1",
     "webpack-dev-server": "^1.16.3"
   },
