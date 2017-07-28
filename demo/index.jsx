@@ -46,7 +46,9 @@ class MainLayout extends React.Component {
                 </nav>
                 <TreeSelectionComponent
                     isOpened={this.state.isOpened}
-                    onClose={this.toggleVisibleProjects.bind(this)}
+                    onClose={function() {
+                        this.toggleVisibleProjects(false);
+                    }.bind(this)}
                     onSave={this.save.bind(this)}
                     visibleItemsIds={this.state.visibleProjects}
                 />

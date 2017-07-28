@@ -1,6 +1,6 @@
 import React from 'react';
 
-export default class TreeNodeView extends React.Component {
+export default class NodeView extends React.Component {
 
     highlightCall(filterArray, name, key) {
         return filterArray.length ? [...this.highlight(name, filterArray, key++)] : [name];

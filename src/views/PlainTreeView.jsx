@@ -1,5 +1,5 @@
 import React from 'react';
-import TreeNodeView from './TreeNodeView.jsx';
+import NodeView from './NodeView.jsx';
 
 export default function(props) {
     if (!props.viewport.items) return null;
@@ -8,7 +8,7 @@ export default function(props) {
             <li style={{height: props.viewport.beginOverlayHeight}}></li>
             {props.viewport.items.map(item => {
                 return (
-                    <TreeNodeView
+                    <NodeView
                         item={item}
                         key={item.id}
                         copy={props.copy}
