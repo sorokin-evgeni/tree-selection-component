@@ -1,6 +1,11 @@
 import ReactDOM from 'react-dom';
 import React from 'react';
 import {TreeSelectionComponent} from '../src';
+import Promise from 'promise-polyfill';
+
+//IE9 hack:
+window.Promise = Promise;
+
 
 class MainLayout extends React.Component {
 

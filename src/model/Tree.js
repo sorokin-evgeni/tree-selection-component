@@ -1,3 +1,7 @@
+/**
+ * All static methods
+ */
+
 import Benchmark from '../utils/Benchmark';
 
 const NAME_SEPARATOR = '::';

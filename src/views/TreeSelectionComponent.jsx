@@ -321,8 +321,6 @@ export default class TreeSelectionComponent extends React.Component {
                         </tr>
                     </tbody>
                 </table>
-
-                <div id="console"></div>
             </Modal>
         );
     }

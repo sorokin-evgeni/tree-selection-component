@@ -15,12 +15,7 @@ const Logger = {
         if (!logLevel) {
             return;
         }
-        console.log(...args);
-    // args.forEach(text => {
-    //     document.write(text);
-    //     let consoleEl = document.getElementById('console');
-    //     consoleEl.innerHTML += text + '<br/>';
-    // })
+        // console.log(...args);
     }
 
 };
