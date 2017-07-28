@@ -1,3 +1,8 @@
+/**
+ * View to output part of large list of items.
+ * Handle scroll events to update visible items.
+ */
+
 import React from 'react';
 import PlainTreeView from './PlainTreeView.jsx';
 

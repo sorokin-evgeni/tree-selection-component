@@ -1,5 +1,5 @@
 /**
- * All static methods
+ * All static methods for operations with tree.
  */
 
 import Benchmark from '../utils/Benchmark';

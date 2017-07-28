@@ -1,3 +1,7 @@
+/**
+ * Just display list of items.
+ */
+
 import React from 'react';
 import NodeView from './NodeView.jsx';
 

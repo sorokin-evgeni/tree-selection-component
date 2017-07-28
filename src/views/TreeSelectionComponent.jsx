@@ -1,3 +1,7 @@
+/**
+ * Base component view
+ */
+
 import React from 'react';
 import Modal from '../components/modal';
 import Tree from '../model/Tree';
@@ -210,7 +214,7 @@ export default class TreeSelectionComponent extends React.Component {
         });
     }
 
-    selectItem(itemId) {
+    selectItem(itemId, onSelect) {
         if (this.state.rootIds.indexOf(itemId) !== -1) return;
         const isEqual = itemId === this.state.selectedItemId;
         this.setState({
@@ -218,6 +222,17 @@ export default class TreeSelectionComponent extends React.Component {
         }, () => {
             if (isEqual || !this.selectedItemType || !this.selectedItemIndex) return;
             this[`${this.selectedItemType}Viewport`].onItemSelect(this.selectedItemIndex);
+            onSelect && onSelect();
+        });
+    }
+
+    copy(itemId) {
+        if (this.state.selectedItemId === itemId) {
+            this.changeSelectedItemVisibility();
+            return;
+        }
+        this.selectItem(itemId, () => {
+            this.changeSelectedItemVisibility();
         });
     }
 
@@ -254,7 +269,7 @@ export default class TreeSelectionComponent extends React.Component {
                         this[`${type}Viewport`] = viewport;
                     }}
                     allItems={this.state[`${type}Items`]}
-                    copy={copy}
+                    copy={this.copy.bind(this)}
                     onSelect={this.selectItem.bind(this)}
                     copyIcon={copyIcon}
                     selectedItemId={this.selectedItemType === type ? this.state.selectedItemId : null}

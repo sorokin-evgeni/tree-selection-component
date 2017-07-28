@@ -1,3 +1,7 @@
+/**
+ * Tree node view.
+ */
+
 import React from 'react';
 
 export default class NodeView extends React.Component {
